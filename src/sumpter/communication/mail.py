@@ -31,6 +31,24 @@ class Config(object):
             self.__dict__[arg] = seg.get_param_val(arg,ctx,val)
             
 class SmtpMailSender(Segment):
+
+    def attach_file(self, msg, filename, fp, ctype):
+        maintype, subtype = ctype.split('/', 1)
+        if maintype == 'text':
+            attach = MIMEText(fp.read(), _subtype=subtype)
+        elif maintype == 'message':
+            attach = email.message_from_file(fp)
+        elif maintype == 'image':
+            attach = MIMEImage(fp.read(), _subtype=subtype)
+        elif maintype == 'audio':
+            attach = MIMEAudio(fp.read(), _subtype=subtype)
+        else:
+            attach = MIMEBase(maintype, subtype)
+        attach.set_payload(fp.read())
+        encode_base64(attach)
+        attach.add_header('Content-Disposition', 'attachment', filename=filename)
+        msg.attach(attach)
+
     def perform(self,ctx,val):
         
         config = Config(self,ctx,val,'from_addr','to_addrs','subject','body','files','host','port','tls','username','password')
@@ -41,27 +59,18 @@ class SmtpMailSender(Segment):
         msg['To'] = config.to_addrs
         msg.attach(MIMEText(config.body, 'plain'))
 
-        for filename in config.files :
-            ctype, encoding = mimetypes.guess_type(filename)
-            if ctype is None or encoding is not None :
-                ctype='application/octet-stream'
-            maintype,subtype = ctype.split('/',1)
-            with file(filename) as fp :
-                if maintype == 'text':
-                    attach = MIMEText(fp.read(),_subtype=subtype)
-                elif maintype == 'message':
-                    attach = email.message_from_file(fp)
-                elif maintype == 'image':
-                    attach = MIMEImage(fp.read(),_subtype=subtype)
-                elif maintype == 'audio':
-                    attach = MIMEAudio(fp.read(),_subtype=subtype)
-                else:
-                    attach = MIMEBase(maintype, subtype)
-                attach.set_payload(fp.read())
-                encode_base64(attach)
-                attach.add_header('Content-Disposition', 'attachment',
-                                  filename=filename)
-                msg.attach(attach)
+        for filespec in config.files :
+            if isinstance (filespec,tuple) :
+                filename,fp,ctype = filespec
+                self.attach_file(msg, filename, fp, ctype)
+            else :
+                filename = filespec
+                ctype, encoding = mimetypes.guess_type(filename)
+                print ctype
+                if ctype is None or encoding is not None :
+                    ctype='application/octet-stream'
+                with file(filename) as fp :
+                    self.attach_file(msg, filename, fp, ctype)
                     
         # The actual mail send
         server = smtplib.SMTP('%s:%s'%(config.host,config.port))
