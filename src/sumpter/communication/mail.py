@@ -66,7 +66,6 @@ class SmtpMailSender(Segment):
             else :
                 filename = filespec
                 ctype, encoding = mimetypes.guess_type(filename)
-                print ctype
                 if ctype is None or encoding is not None :
                     ctype='application/octet-stream'
                 with file(filename) as fp :
