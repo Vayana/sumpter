@@ -20,16 +20,11 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from sumpter import Segment
+from sumpter import Segment, Config
 import email
 import mimetypes
 import smtplib
 
-class Config(object):
-    def __init__(self,seg,ctx,val,*args):
-        for arg in args :
-            self.__dict__[arg] = seg.get_param_val(arg,ctx,val)
-            
 class SmtpMailSender(Segment):
 
     def attach_file(self, msg, filename, fp, ctype):

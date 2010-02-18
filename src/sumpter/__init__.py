@@ -14,10 +14,10 @@
 #    limitations under the License.
 ############################################################################# 
 
-from types import GeneratorType,FunctionType
-import yaml
+from types import GeneratorType, FunctionType
 import StringIO
 import hashlib
+import yaml
           
 class PypeError(Exception):
     def __init__(self,key,*args):
@@ -329,5 +329,36 @@ class Join(DropSegment):
             for nxt in self.next :
                 nxt.send(newdrp)
                 
-
-        
+class Config(object):
+    def __init__(self,seg,ctx,val,*args):
+        for arg in args :
+            self.__dict__[arg] = seg.get_param_val(arg,ctx,val)
+            
+from collections import defaultdict
+class Node(object):
+    def __init__(self,name,indexed = True):
+        self.name = name
+        self.children = []
+        self.attrs = {}
+        self.indexed = indexed
+        if self.indexed :
+            self.index = defaultdict(list)
+    def add(self,child):
+        self.children.append(child)
+        if self.indexed :      
+            self.index[child.name] = child
+    def set(self,attr_name,attr_val):
+        self.attrs[attr_name] = attr_val
+    def get(self,attr_name):
+        return self.attrs[attr_name]
+    def attribute_names(self):
+        return self.attrs.iterkeys()
+    def children(self,name = None):
+        if not name :
+            return self.children.__iter__()
+        elif self.indexed :
+            return self.index[name].__iter__()
+        else :
+            raise 'Indexed access on an unindexed Node'
+    def attribute_pairs(self):
+        return self.attrs.iteritems()
