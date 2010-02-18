@@ -39,7 +39,7 @@ class SmtpMailSender(Segment):
             attach = MIMEAudio(fp.read(), _subtype=subtype)
         else:
             attach = MIMEBase(maintype, subtype)
-        attach.set_payload(fp.read())
+            attach.set_payload(fp.read())
         encode_base64(attach)
         attach.add_header('Content-Disposition', 'attachment', filename=filename)
         msg.attach(attach)
