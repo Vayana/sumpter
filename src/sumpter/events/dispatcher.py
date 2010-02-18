@@ -13,12 +13,12 @@
 #    See the License for the specific language governing permissions and 
 #    limitations under the License.
 ############################################################################# 
-from core.test_core import to_dict
-from sumpter import Drop, ctx_ref, drop_dict_ref
-from sumpter.communication.mail import SmtpMailSender
-import localconf
-import unittest
 from collections import defaultdict
+#from core.test_core import to_dict
+from sumpter import Drop
+#from sumpter.communication.mail import SmtpMailSender
+#import localconf
+#import unittest
 
 class Dispatcher(object):
     def __init__(self):
@@ -30,7 +30,8 @@ class Dispatcher(object):
     def send(self,ctx, event,**data):
         for pype in self.rules[event] :
             drop = Drop(ctx,data)
-            return pype.send(drop)
+            drop = pype.send(drop)
+        return drop
 
 dispatcher = Dispatcher()        
         
