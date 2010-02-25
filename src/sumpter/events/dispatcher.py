@@ -28,6 +28,7 @@ class Dispatcher(object):
         self.rules[type].append(pype)
         
     def send(self,ctx, event,**data):
+        drop = None
         for pype in self.rules[event] :
             drop = Drop(ctx,data)
             drop = pype.send(drop)
