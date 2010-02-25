@@ -14,11 +14,31 @@
 #    limitations under the License.
 ############################################################################# 
 
+from collections import defaultdict
 from types import GeneratorType, FunctionType
 import StringIO
 import hashlib
+import types
 import yaml
           
+resource_registry = {}
+
+def provides(cls):
+    def init_and_register(init):
+        def inner(self,*args,**kwargs):
+            init(self,*args,**kwargs)
+            resource_registry[self.name] = self
+        return inner
+    cls._resource_type = type
+    cls.__init__ = init_and_register(cls.__init__)
+    return cls
+
+def requires(*resource_types):
+    def inner(cls):
+        cls._resource_types = resource_types
+        return cls
+    return inner
+
 class PypeError(Exception):
     def __init__(self,key,*args):
         self.key = key
@@ -212,6 +232,9 @@ class Segment(object):
         self.next = []
         self.prev = []
         self.func = func
+        if hasattr(self,'_resource_types') :
+            for resource_type in self._resource_types:
+                self.__dict__[resource_type] = resource_registry[kw[resource_type]]
     
     def set_next(self,next):
         self.next.append(next)
@@ -334,7 +357,14 @@ class Config(object):
         for arg in args :
             self.__dict__[arg] = seg.get_param_val(arg,ctx,val)
             
-from collections import defaultdict
+class Generic(object):
+    def __init__(self,**kwargs):
+        self.__dict__.update(kwargs)
+    def _attrs(self) :
+        return ((name,val) for name,val in self.__dict__.items() if not name.startswith('_'))
+    def __repr__(self):
+        return "Generic(%s)" % ".".join('%s:%s' % (name,val) for name,val in self._attrs())
+    
 class Node(object):
     def __init__(self,name,indexed = True):
         self.name = name
