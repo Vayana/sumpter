@@ -15,6 +15,7 @@
 ############################################################################# 
 
 from email.encoders import encode_base64
+from email.mime.application import MIMEApplication
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
@@ -37,10 +38,13 @@ class SmtpMailSender(Segment):
             attach = MIMEImage(fp.read(), _subtype=subtype)
         elif maintype == 'audio':
             attach = MIMEAudio(fp.read(), _subtype=subtype)
+        elif maintype == 'application':
+            attach = MIMEApplication(fp.read(), _subtype=subtype)
         else:
             attach = MIMEBase(maintype, subtype)
             attach.set_payload(fp.read())
-        encode_base64(attach)
+            encode_base64(attach)
+            
         attach.add_header('Content-Disposition', 'attachment', filename=filename)
         msg.attach(attach)
 
