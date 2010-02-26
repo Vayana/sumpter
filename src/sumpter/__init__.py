@@ -363,7 +363,11 @@ class Generic(object):
     def _attrs(self) :
         return ((name,val) for name,val in self.__dict__.items() if not name.startswith('_'))
     def __repr__(self):
-        return "Generic(%s)" % ".".join('%s:%s' % (name,val) for name,val in self._attrs())
+        return "G{%s}" % ",".join('%s:%s' % (name,val) for name,val in self._attrs())
+
+class GenericList(list):
+    def __init__(self,**kwargs):
+        self.__dict__.update(kwargs)
     
 class Node(object):
     def __init__(self,name,indexed = True):
