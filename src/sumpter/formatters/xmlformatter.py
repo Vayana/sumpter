@@ -161,5 +161,6 @@ class SimpleXmlParser(Segment) :
         parser.setContentHandler(handler)
         parser.parse(cStringIO.StringIO(config.xml))
         val['model'] = handler.result
+        return val
 
     
