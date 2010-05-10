@@ -124,6 +124,8 @@ class Drop(object):
         # (by transferring work to another drop or having reached
         # the end of the pipeline. 
         self.alive = True
+        
+        self.aborted = False
                     
     def record(self,seg):
         """ record that this drop was processed by the given seg """
@@ -150,6 +152,10 @@ class Drop(object):
     
     def get_trace(self):
         return '=>'.join(str(seg) for seg in self.trace)
+    
+    def abort_on_exception(self,e):
+        self.aborted_on_exception = e
+        self.aborted = True
 
 class Pype(object):
     """
@@ -272,9 +278,9 @@ class Segment(object):
                             nxt.send(child_drop)
                         except Exception as e :
                             if hasattr(self,'ignore_child_exceptions') and self.ignore_child_exceptions :
-                                pass
+                                child_drop.abort_on_exception(e)
                             else :
-                                raise e
+                                raise PypeRuntimeError('wrapped-exception',e,self,drop)
                             
             else :
                 drop.val = val

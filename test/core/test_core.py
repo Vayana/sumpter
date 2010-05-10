@@ -325,9 +325,10 @@ class TestSegment(unittest.TestCase):
         self.assert_(seg1 not in drop.trace)
         try :
             new_drop = seg1.send(drop)
-        except Exception as e:
-            self.assertEquals(e.args[0].args[0],'foo')
-            self.assertEquals(e.args[1],seg2)
+        except PypeRuntimeError as e:
+            inner_exception = e.args[0]
+            self.assertEquals(inner_exception.args[0].args[0],'foo')
+            self.assertEquals(inner_exception.args[1],seg2)
         else :
             self.fail('Expected Exception Not received')
         
@@ -360,6 +361,9 @@ class TestSegment(unittest.TestCase):
         self.assertEquals(len(new_drop.children),5)
         for child in drop.children :
             self.assert_(type(child),Drop)
+            if child.aborted: 
+                self.assertEquals(child.aborted_on_exception.args[0].args[0],'foo')
+                self.assertEquals(child.aborted_on_exception.args[1],seg2)
         self.assertEquals('hello',"".join(child.val for child in drop.children))
         
     def testSequence(self):
