@@ -255,24 +255,37 @@ class Segment(object):
 
     def send(self,drop):
         drop.record(self)
-        if self.func != None:
-            val = self.func(drop.ctx,drop.val)
-        else :
-            val = self.perform(drop.ctx,drop.val)
+        try :
+            if self.func != None:
+                val = self.func(drop.ctx,drop.val)
+            else :
+                val = self.perform(drop.ctx,drop.val)
         
-        if not val and val != drop.val :
-            # drop was consumed. eg by a batcher. do nothing
-            pass    
-        elif isinstance(val,(GeneratorType,list,tuple)) :
-            for child_val in val :
+            if not val and val != drop.val :
+                # drop was consumed. eg by a batcher. do nothing
+                pass    
+            elif isinstance(val,(GeneratorType,list,tuple)) :
+                for child_val in val :
+                    for nxt in self.next :
+                        try :
+                            child_drop = drop.create_child(child_val)
+                            nxt.send(child_drop)
+                        except Exception as e :
+                            if hasattr(self,'ignore_child_exceptions') and self.ignore_child_exceptions :
+                                pass
+                            else :
+                                raise e
+                            
+            else :
+                drop.val = val
                 for nxt in self.next :
-                    child_drop = drop.create_child(child_val)
-                    nxt.send(child_drop)
-        else :
-            drop.val = val
-            for nxt in self.next :
-                nxt.send(drop)
- 
+                    nxt.send(drop)
+        except PypeError as pe :
+            raise pe
+        except Exception as e :
+            e2 = PypeRuntimeError('wrapped-exception', e, self, drop)
+            raise e2
+            
         return drop
     
     def __str__(self):
@@ -287,23 +300,29 @@ class Segment(object):
 
 class DropSegment(Segment):
     def send(self,drop):
-        drop.record(self)
-        if self.func != None:
-            new_drop = self.func(drop)
-        else :
-            new_drop = self.perform(drop)
-        
-        if not new_drop :
-            # drop was consumed. eg by a batcher. do nothing
-            pass    
-        elif isinstance(new_drop,(GeneratorType,list,tuple)) :
-            for child_drop in new_drop :
+        try :
+            drop.record(self)
+            if self.func != None:
+                new_drop = self.func(drop)
+            else :
+                new_drop = self.perform(drop)
+            
+            if not new_drop :
+                # drop was consumed. eg by a batcher. do nothing
+                pass    
+            elif isinstance(new_drop,(GeneratorType,list,tuple)) :
+                for child_drop in new_drop :
+                    for nxt in self.next :
+                        nxt.send(child_drop)
+            else :
                 for nxt in self.next :
-                    nxt.send(child_drop)
-        else :
-            for nxt in self.next :
-                nxt.send(new_drop)
- 
+                    nxt.send(new_drop)
+        except PypeError as pe :
+            raise pe
+        except Exception as e :
+            e2 = PypeRuntimeError('wrapped-exception', e, self, drop)
+            raise e2
+     
         return drop
 
 

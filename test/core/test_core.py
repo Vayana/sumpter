@@ -287,12 +287,74 @@ class TestSegment(unittest.TestCase):
         def tracker(ctx,val):
             track.append(val)
             return val
+        def exception_raiser(ctx,val):
+            raise Exception('foo')
         drop = Drop({'first': 1, 'second' : 2} ,'hello')
+        
+        # simple splitter
+        
         seg1 = Segment('sample1', splitter, param1 = 'value1', param2= 'value2')
         seg2 = Segment('sample2', splitter, param1 = 'value1', param2= 'value2')
         seg1 | seg2
         self.assert_(seg1 not in drop.trace)
         new_drop = seg1.send(drop)
+        self.assert_(seg1 in new_drop.trace)
+        self.assertEquals(drop,new_drop)
+        self.assertEquals(len(new_drop.children),5)
+        for child in drop.children :
+            self.assert_(type(child),Drop)
+        self.assertEquals('hello',"".join(child.val for child in drop.children))
+        
+    def testSplittingFuncWithListWithException(self):
+        track = []
+        def splitter(ctx,val):
+            return tuple(char for char in val)
+        def exception_raiser(ctx,val):
+            if val == 'l' : raise Exception('foo')
+            else : return val
+        def tracker(ctx,val):
+            track.append(val)
+            return val
+        drop = Drop({'first': 1, 'second' : 2} ,'hello')
+        
+        # simple splitter
+        
+        seg1 = Segment('sample1', splitter, param1 = 'value1', param2= 'value2')
+        seg2 = Segment('sample2', exception_raiser, param1 = 'value1', param2= 'value2')
+        seg1 | seg2
+        self.assert_(seg1 not in drop.trace)
+        try :
+            new_drop = seg1.send(drop)
+        except Exception as e:
+            self.assertEquals(e.args[0].args[0],'foo')
+            self.assertEquals(e.args[1],seg2)
+        else :
+            self.fail('Expected Exception Not received')
+        
+        for child in drop.children :
+            self.assert_(type(child),Drop)
+        self.assertEquals('hel',"".join(child.val for child in drop.children))
+        
+    def testSplittingFuncWithListWithIgnoreException(self):
+        track = []
+        def splitter(ctx,val):
+            return tuple(char for char in val)
+        def exception_raiser(ctx,val):
+            if val == 'l' : raise Exception('foo')
+            else : return val
+        def tracker(ctx,val):
+            track.append(val)
+            return val
+        drop = Drop({'first': 1, 'second' : 2} ,'hello')
+        
+        # simple splitter
+        
+        seg1 = Segment('sample1', splitter, param1 = 'value1', param2= 'value2',ignore_child_exceptions = True)
+        seg2 = Segment('sample2', exception_raiser, param1 = 'value1', param2= 'value2')
+        seg1 | seg2
+        self.assert_(seg1 not in drop.trace)
+        new_drop = seg1.send(drop)
+        
         self.assert_(seg1 in new_drop.trace)
         self.assertEquals(drop,new_drop)
         self.assertEquals(len(new_drop.children),5)
