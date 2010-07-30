@@ -49,9 +49,10 @@ class SmtpMailSender(Segment):
         msg.attach(attach)
 
     def perform(self,ctx,val):
-        
+
         config = Config(self,ctx,val,'from_addr','to_addrs','subject','body','files','host','port','tls','username','password')
-                
+        recipients = config.to_addrs.split(',')
+
         msg = MIMEMultipart()
         msg['Subject'] = config.subject
         msg['From'] = config.from_addr
@@ -69,12 +70,12 @@ class SmtpMailSender(Segment):
                     ctype='application/octet-stream'
                 with file(filename) as fp :
                     self.attach_file(msg, filename, fp, ctype)
-                    
+
         # The actual mail send
         server = smtplib.SMTP('%s:%s'%(config.host,config.port))
         if config.tls is True :
             server.starttls()
         server.login(config.username,config.password)
-        server.sendmail(config.from_addr, config.to_addrs, msg.as_string())
+        server.sendmail(config.from_addr, recipients, msg.as_string())
         server.quit()
         
