@@ -276,6 +276,11 @@ class Segment(object):
                         try :
                             child_drop = drop.create_child(child_val)
                             nxt.send(child_drop)
+                        except PypeError as pe :
+                            if hasattr(self,'ignore_child_exceptions') and self.ignore_child_exceptions :
+                                child_drop.abort_on_exception(e)
+                            else :
+                            	raise pe
                         except Exception as e :
                             if hasattr(self,'ignore_child_exceptions') and self.ignore_child_exceptions :
                                 child_drop.abort_on_exception(e)
