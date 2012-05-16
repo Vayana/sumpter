@@ -52,14 +52,14 @@ class PypeRuntimeError(PypeError):
 class PypeConfigurationError(PypeError):
     pass
 
-def ctx_ref(param, default=None):
+def ctx_ref(param, default=None, optional=False):
     def ctx_extract(seg,ctx,val):
-        return ctx[param] if default is None else ctx.get(param, default)
+        return ctx[param] if default is None and optional is False else ctx.get(param, default)
     return ctx_extract
 
-def drop_dict_ref(param, default=None):
+def drop_dict_ref(param, default=None, optional=False):
     def drop_dict_extract(seg,ctx,val):
-        return val[param] if default is None else val.get(param, default)
+        return val[param] if default is None and optional is False else val.get(param, default)
     return drop_dict_extract
 
 def drop_attr_ref(param):

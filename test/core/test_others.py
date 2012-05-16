@@ -26,6 +26,8 @@ class TestUtilityFunctions(unittest.TestCase):
         val = {}
         x = drop_dict_ref('foo', default='baz')(None, {}, val)
         self.assertEquals(x, 'baz')
+        x = drop_dict_ref('foo', optional=True)(None, {}, val)
+        self.assertEquals(x, None)
         x = drop_dict_ref('foo')
         self.assertRaises(KeyError, x, None, {}, val)
 
@@ -36,5 +38,7 @@ class TestUtilityFunctions(unittest.TestCase):
         ctx = {}
         x = ctx_ref('foo', default='baz')(None, ctx, {})
         self.assertEquals(x, 'baz')
+        x = ctx_ref('foo', optional=True)(None,ctx, {})
+        self.assertEquals(x, None)
         x = ctx_ref('foo')
         self.assertRaises(KeyError, x, None, ctx, {})
