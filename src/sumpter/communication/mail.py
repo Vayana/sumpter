@@ -50,14 +50,15 @@ class SmtpMailSender(Segment):
 
     def perform(self,ctx,val):
 
-        config = Config(self,ctx,val,'from_addr','to_addrs','subject','body','files','host','port','tls','username','password')
+        config = Config(self,ctx,val,'from_addr','to_addrs','subject','body','body_mimetype','debug','reply_to','files','host','port','tls','username','password')
         recipients = config.to_addrs.split(',')
 
         msg = MIMEMultipart()
         msg['Subject'] = config.subject
         msg['From'] = config.from_addr
         msg['To'] = config.to_addrs
-        msg.attach(MIMEText(config.body, 'plain'))
+        if config.reply_to: msg['Reply-To'] = config.reply_to
+        msg.attach(MIMEText(config.body, config.body_mimetype))
 
         for filespec in config.files :
             if isinstance (filespec,tuple) :
@@ -75,7 +76,9 @@ class SmtpMailSender(Segment):
         server = smtplib.SMTP('%s:%s'%(config.host,config.port))
         if config.tls is True :
             server.starttls()
-        server.login(config.username,config.password)
+        server.set_debuglevel(config.debug)
+        if hasattr(config,"username") and getattr(config,"username", "") :
+            server.login(config.username,config.password)
         server.sendmail(config.from_addr, recipients, msg.as_string())
         server.quit()
         

@@ -52,14 +52,14 @@ class PypeRuntimeError(PypeError):
 class PypeConfigurationError(PypeError):
     pass
 
-def ctx_ref(param):
+def ctx_ref(param, default=None):
     def ctx_extract(seg,ctx,val):
-        return ctx[param]
+        return ctx[param] if default is None else ctx.get(param, default)
     return ctx_extract
 
-def drop_dict_ref(param):
+def drop_dict_ref(param, default=None):
     def drop_dict_extract(seg,ctx,val):
-        return val[param]
+        return val[param] if default is None else val.get(param, default)
     return drop_dict_extract
 
 def drop_attr_ref(param):
@@ -266,7 +266,7 @@ class Segment(object):
                 val = self.func(drop.ctx,drop.val)
             else :
                 val = self.perform(drop.ctx,drop.val)
-        
+
             if not val and val != drop.val :
                 # drop was consumed. eg by a batcher. do nothing
                 pass    
@@ -278,7 +278,7 @@ class Segment(object):
                             nxt.send(child_drop)
                         except PypeError as pe :
                             if hasattr(self,'ignore_child_exceptions') and self.ignore_child_exceptions :
-                                child_drop.abort_on_exception(e)
+                                child_drop.abort_on_exception(pe)
                             else :
                             	raise pe
                         except Exception as e :
@@ -286,7 +286,6 @@ class Segment(object):
                                 child_drop.abort_on_exception(e)
                             else :
                                 raise PypeRuntimeError('wrapped-exception',e,self,drop)
-                            
             else :
                 drop.val = val
                 for nxt in self.next :
