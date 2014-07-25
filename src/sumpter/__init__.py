@@ -20,7 +20,7 @@ import StringIO
 import hashlib
 import types
 import yaml
-          
+
 resource_registry = {}
 
 def provides(cls):

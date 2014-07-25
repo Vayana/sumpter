@@ -25,6 +25,9 @@ from sumpter import Segment, Config
 import email
 import mimetypes
 import smtplib
+import logging
+
+log = logging.getLogger(__name__)
 
 class SmtpMailSender(Segment):
 
@@ -80,5 +83,6 @@ class SmtpMailSender(Segment):
         if hasattr(config,"username") and getattr(config,"username", "") :
             server.login(config.username,config.password)
         server.sendmail(config.from_addr, recipients, msg.as_string())
+        log.debug("Sendiing mail from {0} to {1} via {2}@{3}:{4} with subject {5}".format(config.from_addr, config.to_addrs, config.username,config.host,config.port, config.subject))
         server.quit()
         
