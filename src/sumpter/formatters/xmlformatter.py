@@ -46,6 +46,10 @@ class SimpleXmlComposer(Segment):
     def compose(self,doc,parent,elemname,content):
         element = doc.createElement(elemname)
         parent.appendChild(element)
+        if getattr(content, '_is_cdata', False):
+            cdata = doc.createCDATASection(str(content.value))
+            element.appendChild(cdata)
+            return
         elements = False
         if hasattr(content,'_elements') : elements = content._elements 
         if isinstance(content,(types.ListType,types.TupleType)) :
