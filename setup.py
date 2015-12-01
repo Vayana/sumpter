@@ -20,7 +20,7 @@ Created on 12-Jan-2010
 '''
 from setuptools import setup, find_packages
 setup(name='sumpter',
-    version='0.1.2-SNAPSHOT',
+    version='0.1.2',
     description='Data processing pipeline building software framework',
     package_dir = {'':'src'},
     packages=find_packages('src')
