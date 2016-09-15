@@ -110,6 +110,8 @@ class ElementList(object):
         if len(content) > 0 : self.content.append(content)
     def add_attr(self,name,val):
         self.attrs.append((name,val))
+    def get_content(self):
+        return self.to_generic()
     def to_generic(self):
         return tuple((name, val.to_generic if isinstance(val,(Element,ElementList)) else val) for name,val in self.attrs)
         
